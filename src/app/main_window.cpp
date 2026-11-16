@@ -11,6 +11,7 @@
 #include "write_card_loading.h"
 #include "aka_auth_loading.h"
 #include "dms/dms.h"
+#include "dataload/dataload.h"
 
 #include <memory>
 #include <qaction.h>
@@ -424,27 +425,47 @@ void MainWindow::confirmDeleteOrder(int type, const std::string &password) {
     }
 
     // 弹出确认框
-    auto order_no    = ui_->telecom_order_combo_box->currentText().toStdString();
+    std::string order_no;
+    switch (type) {
+    case 1:
+        order_no = ui_->telecom_order_combo_box->currentText().toStdString();
+        break;
+    case 2:
+        order_no = ui_->finance_order_combo_box->currentText().toStdString();
+        break;
+    default:
+        QMessageBox::critical(this, "错误", "未知类型");
+        break;
+    }
+
     auto confirm_box = QMessageBox::question(this, "确认删除", "确认删除订单号为" + QString(order_no.c_str()) + "的订单吗?");
 
     if (confirm_box == QMessageBox::Yes) {
+        auto result = false;
         switch (type) {
         case 1: {
             Dms dms(telecom_db_, order_no);
-            dms.deleteOrder();
+            result = dms.deleteOrder();
             break;
         }
 
         case 2: {
+            Dataload dataload(finance_db_, order_no);
+            result = dataload.deleteOrder();
             break;
         }
 
         default:
             QMessageBox::critical(this, "错误", "未知类型");
+            break;
         }
 
         // 删除成功弹窗
-        QMessageBox::information(this, "提示", "删除成功");
+        if (result) {
+            QMessageBox::information(this, "提示", "删除成功");
+        } else {
+            QMessageBox::critical(this, "错误", "删除失败");
+        }
     }
 }
 
@@ -576,7 +597,7 @@ void MainWindow::runScriptSuccess(const QString &script_name, const QString &res
 
 void MainWindow::init_window() {
     // 设置窗口标题
-    setWindowTitle("智能卡生产预处理软件 v3.5.2");
+    setWindowTitle("智能卡生产预处理软件 v3.5.3");
 
     ui_->add_dir_widget->setAcceptDrops(false);
     setAcceptDrops(true);
@@ -701,6 +722,7 @@ void MainWindow::init_signal_slot() {
     connect(ui_->start_auth_btn, &QPushButton::clicked, this, &MainWindow::akaAuthBtnClicked);
 
     // 制表
+    connect(ui_->finance_delete_order_btn, &QPushButton::clicked, this, &MainWindow::deleteFinanceOrderBtnClicked);
     connect(ui_->finance_select_generate_file_btn, &QPushButton::clicked, this, &MainWindow::selectFinanceGeneratePathBtnClicked);
     connect(ui_->finance_generating_btn, &QPushButton::clicked, this, &MainWindow::generatingFinanceRecordBtnClicked);
     connect(ui_->telecom_delete_order_btn, &QPushButton::clicked, this, &MainWindow::deleteTelecomOrderBtnClicked);

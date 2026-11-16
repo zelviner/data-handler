@@ -16,8 +16,8 @@ class Dataload {
   private:
     bool order_info();
 
-    bool delete_record();
     bool delete_production_data();
+    bool delete_record();
     bool delete_order_data();
 
   private:

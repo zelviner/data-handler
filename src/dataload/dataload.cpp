@@ -33,10 +33,10 @@ bool Dataload::deleteOrder() {
 
 bool Dataload::order_info() {
     XhOrderList xh_order_list(*db_);
-    xh_order_list.where("xh_order_name", order_info_.order_no);
+    xh_order_list.where("xh_order_number", order_info_.order_no);
     auto dpo_all = xh_order_list.all();
     if (dpo_all.empty() || dpo_all.size() > 1) {
-        log_error("table dms_product_orders has no or more than one record, order: %s", order_info_.order_no.c_str());
+        log_error("table xh_order_list has no or more than one record, order: %s", order_info_.order_no.c_str());
         return false;
     }
 
@@ -51,78 +51,41 @@ bool Dataload::order_info() {
     }
 
     for (auto &one : doc_all) {
-        auto filename = one("xh_order_filename").asString();
-        auto table_name = filename.substr(0, filename.length() -1);
-        printf("table_name: %s\n" ,table_name.c_str());
+        auto filename   = one("xh_order_filename").asString();
+        auto table_name = filename.substr(0, filename.length() - 4);
+        order_info_.data_table_names.push_back(table_name);
     }
 
     return true;
 }
 
-bool Dataload::delete_record() {
-    // std::string order_no = String::toLower(order_info_.order_no);
-
-    // // delete dms_remake_record table
-    // DmsRemakeRecord dms_remake_record(*db_, order_no, "ID");
-    // std::string     sql = "DROP TABLE IF EXISTS `" + dms_remake_record.table() + "`";
-
-    // // delete dms_record_logs table
-    // DmsRecordLogs dms_record_logs(*db_, order_no, "ID");
-    // sql = "DROP TABLE IF EXISTS `" + dms_record_logs.table() + "`";
-    // db_->execute(sql);
-
-    // // delete dms_deleterecord records
-    // DmsDeleteRecord(*db_).where("Order", order_info_.order_id).remove();
-
-    // // delete dms_bindrecord records
-    // DmsBindRecord(*db_)
-    //     .where("Perso", order_info_.perso_script_path)
-    //     .where("Verify", order_info_.verify_script_path)
-    //     .where("Clear", order_info_.clear_script_path)
-    //     .remove();
-
-    // // delete dms_processrecord records
-    // DmsProcessRecord(*db_).where("Product", order_info_.order_no).remove();
-
-    return true;
+bool Dataload::delete_production_data() {
+    try {
+        for (auto table_name : order_info_.data_table_names) {
+            std::string sql = "DROP TABLE IF EXISTS `" + String::toLower(table_name) + "`";
+            db_->execute(sql);
+        }
+        return true;
+    } catch (const std::exception &e) {
+        return false;
+    }
 }
 
-bool Dataload::delete_production_data() {
-    // std::string order_no = String::toLower(order_info_.order_no);
-
-    // // delete dms_remake table
-    // DmsRemake   dms_remake(*db_, order_no, "ID");
-    // std::string sql = "DROP TABLE IF EXISTS `" + dms_remake.table() + "`";
-    // db_->execute(sql);
-
-    // // delete dms_remake_file records
-    // DmsRemakeFile(*db_).where("Order", order_info_.order_id).remove();
-
-    // // delete dms_tasklist records
-    // DmsTaskList(*db_).where("Order", order_info_.order_id).remove();
-
-    return true;
+bool Dataload::delete_record() {
+    try {
+        XhDatatoolRecord xh_datatool_record(*db_);
+        xh_datatool_record.where("RID", order_info_.order_id).remove();
+        return true;
+    } catch (const std::exception &e) {
+        return false;
+    }
 }
 
 bool Dataload::delete_order_data() {
-    // std::string data_table_name = String::toLower(order_info_.perso_data_table_name);
-
-    // // delete perso_data table
-    // DmsPersoData dms_perso_data(*db_, data_table_name, "ID");
-    // std::string  sql = "DROP TABLE IF EXISTS `" + dms_perso_data.table() + "`";
-    // db_->execute(sql);
-
-    // // delete dms_batch_file records
-    // DmsBatchFiles(*db_).where("Batch", order_info_.batch_list_id).remove();
-
-    // // delete dms_batch_list records
-    // DmsBatchList(*db_).where("ID", order_info_.batch_list_id).remove();
-
-    // // delete dms_orderconf records
-    // DmsOrderConf(*db_).where("Order", order_info_.order_id).remove();
-
-    // // delete dms_productorders records
-    // DmsProductOrders(*db_).where("Code", order_info_.order_no).remove();
-
-    return true;
+    try {
+        XhOrderList(*db_).where("xh_order_number", order_info_.order_no).remove();
+        return true;
+    } catch (const std::exception &e) {
+        return false;
+    }
 }
