@@ -11,7 +11,7 @@ class Authenticator : public QMainWindow {
     Q_OBJECT
 
   public:
-    Authenticator(QMainWindow *parent = nullptr);
+    Authenticator(QMainWindow *parent = nullptr, int type = 0);
     ~Authenticator();
 
     /// @brief 确定按钮点击事件
@@ -21,7 +21,7 @@ class Authenticator : public QMainWindow {
     void cancelBtnClicked();
 
   signals:
-    void confirmDeleteOrder(const std::string &password);
+    void confirmDeleteOrder(int type, const std::string &password);
     void cancelDeleteOrder();
 
   private:
@@ -31,4 +31,5 @@ class Authenticator : public QMainWindow {
 
   private:
     Ui_Authenticator *ui_;
+    int               type_;
 };

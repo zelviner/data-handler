@@ -9,9 +9,10 @@
 #include <qpushbutton.h>
 #include <qvboxlayout>
 
-Authenticator::Authenticator(QMainWindow *parent)
+Authenticator::Authenticator(QMainWindow *parent, int type)
     : QMainWindow(parent)
-    , ui_(new Ui_Authenticator) {
+    , ui_(new Ui_Authenticator)
+    , type_(type) {
     ui_->setupUi(this);
 
     init_window();
@@ -24,7 +25,7 @@ Authenticator::~Authenticator() { delete ui_; }
 void Authenticator::confirmBtnClicked() {
     auto password = ui_->auth_line->text().toStdString();
 
-    emit confirmDeleteOrder(password);
+    emit confirmDeleteOrder(type_, password);
 }
 
 void Authenticator::cancelBtnClicked() { emit cancelDeleteOrder(); }

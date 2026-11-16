@@ -50,7 +50,7 @@ bool Dms::order_info() {
     dms_product_orders.where("Code", order_info_.order_no);
     auto dpo_all = dms_product_orders.all();
     if (dpo_all.empty() || dpo_all.size() > 1) {
-        log_error("table dms_product_orders has no or more than one record, xh_order_number: %s", order_info_.order_no.c_str());
+        log_error("table dms_product_orders has no or more than one record, order: %s", order_info_.order_no.c_str());
         return false;
     }
 

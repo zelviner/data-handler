@@ -47,6 +47,7 @@ class MainWindow : public QMainWindow {
     void uploadTempBtnClicked(); // 上传临时存放按钮点击事件
 
     /// @brief 制表 Tab
+    void deleteFinanceOrderBtnClicked();        // 删除金融订单按钮点击事件
     void selectFinanceGeneratePathBtnClicked(); // 选择金融数据分配表生成路径按钮点击事件
     void generatingFinanceRecordBtnClicked();   // 生成金融数据分配表点击事件
     void deleteTelecomOrderBtnClicked();        // 删除电信订单按钮点击事件
@@ -59,7 +60,7 @@ class MainWindow : public QMainWindow {
     void saveBtnClicked();                      // 保存按钮点击事件
 
   public slots:
-    void confirmDeleteOrder(const std::string &password);
+    void confirmDeleteOrder(int type, const std::string &password);
     void cancelDeleteOrder();
 
     void bareAtr(const QString &bare_atr);

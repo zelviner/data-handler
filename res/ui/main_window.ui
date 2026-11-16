@@ -24,7 +24,7 @@
        </font>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -1366,9 +1366,9 @@
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_10">
            <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_54" stretch="10">
+            <layout class="QHBoxLayout" name="horizontalLayout_11">
              <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_51" stretch="1,6">
+              <layout class="QHBoxLayout" name="horizontalLayout_51" stretch="1,5">
                <item>
                 <widget class="QLabel" name="label_15">
                  <property name="font">
@@ -1396,6 +1396,19 @@
                 </widget>
                </item>
               </layout>
+             </item>
+             <item>
+              <widget class="QPushButton" name="finance_delete_order_btn">
+               <property name="font">
+                <font>
+                 <family>微软雅黑</family>
+                 <pointsize>12</pointsize>
+                </font>
+               </property>
+               <property name="text">
+                <string>删除</string>
+               </property>
+              </widget>
              </item>
             </layout>
            </item>

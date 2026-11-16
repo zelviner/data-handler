@@ -225,6 +225,21 @@ void MainWindow::uploadTempBtnClicked() {
     // upload_prd->start();
 }
 
+void MainWindow::deleteFinanceOrderBtnClicked() {
+    auto order_no = ui_->finance_order_combo_box->currentText().toStdString();
+
+    if (order_no.empty()) {
+        QMessageBox::critical(this, "错误", "请先选择要删除的订单号");
+        return;
+    }
+
+    authenticator_ = new Authenticator(this, 2);
+    authenticator_->show();
+
+    connect(authenticator_, &Authenticator::confirmDeleteOrder, this, &MainWindow::confirmDeleteOrder);
+    connect(authenticator_, &Authenticator::cancelDeleteOrder, this, &MainWindow::cancelDeleteOrder);
+}
+
 void MainWindow::selectFinanceGeneratePathBtnClicked() {
     QString order_no = ui_->finance_order_combo_box->currentText();
 
@@ -287,7 +302,7 @@ void MainWindow::deleteTelecomOrderBtnClicked() {
         return;
     }
 
-    authenticator_ = new Authenticator(this);
+    authenticator_ = new Authenticator(this, 1);
     authenticator_->show();
 
     connect(authenticator_, &Authenticator::confirmDeleteOrder, this, &MainWindow::confirmDeleteOrder);
@@ -400,7 +415,7 @@ void MainWindow::saveBtnClicked() {
     }
 }
 
-void MainWindow::confirmDeleteOrder(const std::string &password) {
+void MainWindow::confirmDeleteOrder(int type, const std::string &password) {
     authenticator_->hide();
 
     if (password != "iflogic2025") {
@@ -413,14 +428,33 @@ void MainWindow::confirmDeleteOrder(const std::string &password) {
     auto confirm_box = QMessageBox::question(this, "确认删除", "确认删除订单号为" + QString(order_no.c_str()) + "的订单吗?");
 
     if (confirm_box == QMessageBox::Yes) {
-        Dms dms(telecom_db_, order_no);
-        dms.deleteOrder();
+        switch (type) {
+        case 1: {
+            Dms dms(telecom_db_, order_no);
+            dms.deleteOrder();
+            break;
+        }
+
+        case 2: {
+            break;
+        }
+
+        default:
+            QMessageBox::critical(this, "错误", "未知类型");
+        }
+
         // 删除成功弹窗
         QMessageBox::information(this, "提示", "删除成功");
     }
 }
 
-void MainWindow::cancelDeleteOrder() { authenticator_->hide(); }
+void MainWindow::cancelDeleteOrder() {
+    authenticator_->hide();
+    if (authenticator_ != nullptr) {
+        delete authenticator_;
+        authenticator_ = nullptr;
+    }
+}
 
 void MainWindow::bareAtr(const QString &bare_atr) {
     ui_->bare_card_line->setText(bare_atr);
