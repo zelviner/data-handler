@@ -7,6 +7,7 @@
 #include "task/write_card.hpp"
 #include "task/aka_auth.hpp"
 #include "task/generating_records.hpp"
+#include "task/generating_print_records.hpp"
 #include "clear_card_loading.h"
 #include "write_card_loading.h"
 #include "aka_auth_loading.h"
@@ -290,6 +291,33 @@ void MainWindow::generatingFinanceRecordBtnClicked() {
     // 连接信号槽
     connect(generating_records, &GeneratingRecords::failure, this, &MainWindow::generatingRecordFailure);
     connect(generating_records, &GeneratingRecords::success, this, &MainWindow::generatingRecordSuccess);
+
+    // 启动工作线程
+    generating_records->start();
+}
+
+void MainWindow::generatingFinancePrintRecordBtnClicked() {
+    auto order_number  = ui_->finance_order_combo_box->currentText().toStdString();
+    auto generate_path = ui_->finance_generate_path_line->text().toStdString();
+
+    if (order_number.empty()) {
+        QMessageBox::critical(this, "错误", "请输入订单号");
+        return;
+    }
+
+    if (generate_path.empty()) {
+        QMessageBox::critical(this, "错误", "请选择打印数据表路径");
+        return;
+    }
+
+    loading_->setWindowTitle("金融打印数据表生成中...");
+    loading_->show();
+
+    auto generating_records = new GeneratingPrintRecords(finance_db_, order_number, generate_path);
+
+    // 连接信号槽
+    connect(generating_records, &GeneratingPrintRecords::failure, this, &MainWindow::generatingRecordFailure);
+    connect(generating_records, &GeneratingPrintRecords::success, this, &MainWindow::generatingRecordSuccess);
 
     // 启动工作线程
     generating_records->start();
@@ -597,7 +625,7 @@ void MainWindow::runScriptSuccess(const QString &script_name, const QString &res
 
 void MainWindow::init_window() {
     // 设置窗口标题
-    setWindowTitle("智能卡生产预处理软件 v3.5.3");
+    setWindowTitle("智能卡生产预处理软件 v3.5.4");
 
     ui_->add_dir_widget->setAcceptDrops(false);
     setAcceptDrops(true);
@@ -725,6 +753,7 @@ void MainWindow::init_signal_slot() {
     connect(ui_->finance_delete_order_btn, &QPushButton::clicked, this, &MainWindow::deleteFinanceOrderBtnClicked);
     connect(ui_->finance_select_generate_file_btn, &QPushButton::clicked, this, &MainWindow::selectFinanceGeneratePathBtnClicked);
     connect(ui_->finance_generating_btn, &QPushButton::clicked, this, &MainWindow::generatingFinanceRecordBtnClicked);
+    connect(ui_->finance_generating_print_btn, &QPushButton::clicked, this, &MainWindow::generatingFinancePrintRecordBtnClicked);
     connect(ui_->telecom_delete_order_btn, &QPushButton::clicked, this, &MainWindow::deleteTelecomOrderBtnClicked);
     connect(ui_->telecom_select_generate_file_btn, &QPushButton::clicked, this, &MainWindow::selectTelecomGeneratePathBtnClicked);
     connect(ui_->telecom_generating_btn, &QPushButton::clicked, this, &MainWindow::generatingTelecomRecordBtnClicked);
