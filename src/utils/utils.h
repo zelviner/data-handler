@@ -41,6 +41,8 @@ class Utils {
     static bool ftpUploadDir(const std::string &local_dir, std::string &remote_path, const std::string &userpwd);
     static bool ftpUploadFile(const std::string &local_file, const std::string &ftp_url, const std::string &userpwd);
 
+    static bool isNum(const std::string &str);
+
   private:
     static QFileInfoList ergodic_compression_file(QZipWriter *writer, const QString &rootPath, QString dirPath);
 

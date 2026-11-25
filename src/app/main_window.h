@@ -55,6 +55,11 @@ class MainWindow : public QMainWindow {
     void selectTelecomGeneratePathBtnClicked();    // 选择电信数据分配表生成路径按钮点击事件
     void generatingTelecomRecordBtnClicked();      // 生成电信数据分配表点击事件
 
+    /// @brief 文件 Tab
+    void openSourceMergeDirBtnClicked(); // 浏览带合并文件目录按钮点击事件
+    void openDestMergeDirBtnClicked();   // 浏览合并后文件目录按钮点击事件
+    void startMergeFileBtnClicked();     // 开始合并文件按钮点击事件
+
     /// @brief 配置 Tab
     void selectFinanceTemplatePathBtnClicked(); // 选择金融模板文件径按钮点击事件
     void selectTelecomTemplatePathBtnClicked(); // 选择电信模板文件径按钮点击事件

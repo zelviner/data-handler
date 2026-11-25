@@ -32,7 +32,7 @@ bool Dataload::deleteOrder() {
     return true;
 }
 
-void Dataload::generatingFinancePrintRecords(const std::string &output_file) {
+void Dataload::generatingFinancePrintRecords(const std::string &output_file, int sn) {
     try {
         zel::fs::File print_file(output_file);
         std::string   header = "SN,";
@@ -42,13 +42,12 @@ void Dataload::generatingFinancePrintRecords(const std::string &output_file) {
         header += "Filename\n";
 
         std::string content = header;
-        int         sn      = 1;
         for (auto &table_name : order_info_.data_table_names) {
             auto        sql     = "SELECT " + header.substr(3, header.length() - 13) + " FROM `" + table_name + "`";
             auto        results = db_->query(sql);
             std::string datas   = "";
             for (auto &one : results) {
-                std::string data = fmt::format("{:06d},", sn);
+                std::string data = fmt::format("{:07d},", sn);
                 for (auto &field : order_info_.data_table_fields) {
                     data += one.find(field)->second.asString() + ",";
                 }
@@ -94,7 +93,7 @@ bool Dataload::order_info() {
     for (auto &one : results) {
         auto field = one.find("Field")->second.asString();
         if (field.find("M_") == std::string::npos && field.find("Complete") == std::string::npos && field.find("WriteNum") == std::string::npos &&
-            field.find("IC") == std::string::npos && field.find("CRC") == std::string::npos) {
+            field.find("IC") == std::string::npos && field.find("CRC") == std::string::npos && field.find("ID") == std::string::npos) {
             order_info_.data_table_fields.push_back(field);
         }
     }

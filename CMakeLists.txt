@@ -1,6 +1,6 @@
 # [1] 项目设置 ----------------------------------------------------
 cmake_minimum_required(VERSION 3.14)
-project(DataHandler VERSION 0.1.0 LANGUAGES CXX)
+project(DataHandler VERSION 3.5.5 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 
 # [2] vcpkg工具链配置 ----------------------------------------------

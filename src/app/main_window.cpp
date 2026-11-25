@@ -13,7 +13,9 @@
 #include "aka_auth_loading.h"
 #include "dms/dms.h"
 #include "dataload/dataload.h"
+#include "utils/utils.h"
 
+#include <algorithm>
 #include <memory>
 #include <qaction.h>
 #include <qdesktopservices.h>
@@ -33,6 +35,7 @@
 #include <qfiledialog>
 #include <qstringlistmodel>
 #include <qcompleter>
+#include <shlwapi.h>
 #include <zel/core.h>
 #include <zel/myorm.h>
 
@@ -298,11 +301,22 @@ void MainWindow::generatingFinanceRecordBtnClicked() {
 
 void MainWindow::generatingFinancePrintRecordBtnClicked() {
     auto order_number  = ui_->finance_order_combo_box->currentText().toStdString();
+    auto sn_text       = ui_->finance_data_field_line->text().toStdString();
+    int  sn            = 1;
     auto generate_path = ui_->finance_generate_path_line->text().toStdString();
 
     if (order_number.empty()) {
         QMessageBox::critical(this, "错误", "请输入订单号");
         return;
+    }
+
+    if (!Utils::isNum(sn_text)) {
+        QMessageBox::critical(this, "错误", "请输入有效的 SN 起始号");
+        return;
+    }
+
+    if (sn_text != "") {
+        sn = std::stoi(sn_text);
     }
 
     if (generate_path.empty()) {
@@ -313,7 +327,7 @@ void MainWindow::generatingFinancePrintRecordBtnClicked() {
     loading_->setWindowTitle("金融打印数据表生成中...");
     loading_->show();
 
-    auto generating_records = new GeneratingPrintRecords(finance_db_, order_number, generate_path);
+    auto generating_records = new GeneratingPrintRecords(finance_db_, order_number, sn, generate_path);
 
     // 连接信号槽
     connect(generating_records, &GeneratingPrintRecords::failure, this, &MainWindow::generatingRecordFailure);
@@ -384,6 +398,92 @@ void MainWindow::generatingTelecomRecordBtnClicked() {
 
     // 启动工作线程
     generating_records->start();
+}
+
+void MainWindow::openSourceMergeDirBtnClicked() {
+    QString dirPath = QFileDialog::getExistingDirectory(this, tr("选择目录"), QDir::homePath(), QFileDialog::ShowDirsOnly);
+
+    ui_->source_merge_dir_line_edit->setText(dirPath);
+}
+
+void MainWindow::openDestMergeDirBtnClicked() {
+    QString dirPath = QFileDialog::getExistingDirectory(this, tr("选择目录"), QDir::homePath(), QFileDialog::ShowDirsOnly);
+
+    ui_->dest_merge_dir_line_edit->setText(dirPath);
+}
+
+void MainWindow::startMergeFileBtnClicked() {
+    auto source_dir_path = ui_->source_merge_dir_line_edit->text().toStdString();
+    auto dest_dir_path   = ui_->dest_merge_dir_line_edit->text().toStdString();
+    auto file_count      = ui_->merge_file_count_spin_box->text().toInt();
+
+    if (source_dir_path == "" || dest_dir_path == "" || file_count == 0) {
+        QMessageBox::critical(this, "错误", "请填写[待合并文件目录], [合并文件数量] 和 [合并后文件目录]");
+        return;
+    }
+
+    zel::fs::Directory source_dir(source_dir_path);
+
+    auto files = source_dir.files();
+    if (!files || files->empty()) {
+        QMessageBox::critical(this, "错误", "待合并目录中没有文件！");
+        return;
+    }
+
+    std::sort(files->begin(), files->end(), [](const zel::fs::File &left, const zel::fs::File &right) {
+        auto left_name  = QString::fromUtf8(left.name().c_str()).toStdWString();
+        auto right_name = QString::fromUtf8(right.name().c_str()).toStdWString();
+        return StrCmpLogicalW(left_name.c_str(), right_name.c_str()) < 0;
+    });
+
+    if (files->size() % static_cast<size_t>(file_count) != 0) {
+        QMessageBox::critical(this, "错误", "合并文件数量不正确！");
+        return;
+    }
+
+    // 获取文件头信息
+    std::string   header = "";
+    zel::fs::File file(files->at(0).path());
+    if (!file.readLine(header)) {
+        QMessageBox::critical(this, "错误", "无法读取文件：" + QString::fromUtf8(files->at(0).path().c_str()));
+        return;
+    }
+
+    for (size_t i = 0; i < files->size(); i += static_cast<size_t>(file_count)) {
+        std::string content = header + "\r\n";
+        for (size_t j = 0; j < static_cast<size_t>(file_count); j++) {
+            std::string   line = "";
+            zel::fs::File file(files->at(i + j).path());
+            if (!file.readLine(line)) {
+                QMessageBox::critical(this, "错误", "无法读取文件：" + QString::fromUtf8(files->at(i + j).path().c_str()));
+                return;
+            }
+            if (header != line) {
+                QMessageBox::critical(this, "错误", "文件有误，文件头信息不一致!");
+                return;
+            }
+
+            while (file.readLine(line)) {
+                content += line + "\r\n";
+            }
+        }
+
+        auto last_file_name = files->at(i + static_cast<size_t>(file_count) - 1).name();
+        auto pos            = last_file_name.find('_');
+        if (pos == std::string::npos) {
+            QMessageBox::critical(this, "错误", "待合并文件名有误，没有文件下划线文件分隔符!");
+            return;
+        }
+
+        auto          filename = dest_dir_path + "/" + files->at(i).prefix() + last_file_name.substr(pos);
+        zel::fs::File file(filename);
+        if (!file.write(content)) {
+            QMessageBox::critical(this, "错误", "无法写入文件：" + QString::fromUtf8(filename.c_str()));
+            return;
+        }
+    }
+
+    QMessageBox::information(this, "成功", "文件合并成功!");
 }
 
 void MainWindow::selectFinanceTemplatePathBtnClicked() {
@@ -625,7 +725,7 @@ void MainWindow::runScriptSuccess(const QString &script_name, const QString &res
 
 void MainWindow::init_window() {
     // 设置窗口标题
-    setWindowTitle("智能卡生产预处理软件 v3.5.4");
+    setWindowTitle("智能卡生产预处理软件 v3.5.5");
 
     ui_->add_dir_widget->setAcceptDrops(false);
     setAcceptDrops(true);
@@ -757,6 +857,11 @@ void MainWindow::init_signal_slot() {
     connect(ui_->telecom_delete_order_btn, &QPushButton::clicked, this, &MainWindow::deleteTelecomOrderBtnClicked);
     connect(ui_->telecom_select_generate_file_btn, &QPushButton::clicked, this, &MainWindow::selectTelecomGeneratePathBtnClicked);
     connect(ui_->telecom_generating_btn, &QPushButton::clicked, this, &MainWindow::generatingTelecomRecordBtnClicked);
+
+    // 文件
+    connect(ui_->open_source_merge_dir_btn, &QPushButton::clicked, this, &MainWindow::openSourceMergeDirBtnClicked);
+    connect(ui_->open_dest_merge_dir_btn, &QPushButton::clicked, this, &MainWindow::openDestMergeDirBtnClicked);
+    connect(ui_->start_merge_file_btn, &QPushButton::clicked, this, &MainWindow::startMergeFileBtnClicked);
 
     // 配置
     connect(ui_->select_finance_template_file_btn, &QPushButton::clicked, this, &MainWindow::selectFinanceTemplatePathBtnClicked);

@@ -266,3 +266,12 @@ bool Utils::delete_file_or_folder(const std::string &str_path) {
     }
     return true;
 }
+
+bool Utils::isNum(const std::string &str) {
+    for (auto &character : str) {
+        auto value = character - 48;
+        if (value < 0 || value > 9) return false;
+    }
+
+    return true;
+}

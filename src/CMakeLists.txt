@@ -62,4 +62,5 @@ target_link_libraries(${APP_NAME} PRIVATE
     zel::myorm
     card_device::card_device
     libmupdf
+    Shlwapi
 )

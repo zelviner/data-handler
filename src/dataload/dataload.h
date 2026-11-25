@@ -12,7 +12,7 @@ class Dataload {
     ~Dataload();
 
     bool deleteOrder();
-    void generatingFinancePrintRecords(const std::string &output_file);
+    void generatingFinancePrintRecords(const std::string &output_file, int sn);
 
   private:
     bool order_info();
